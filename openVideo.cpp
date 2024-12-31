@@ -168,7 +168,7 @@ void myCapture::read(Mat &img)
                 {
                     sws_scale(pSwsCtx, pFrame->data, pFrame->linesize, 0,
                               pCodecCtx->height, pFrameRGB->data, pFrameRGB->linesize);
-                    img = Mat(pCodecCtx->height, pCodecCtx->width, CV_8UC3, pFrameRGB->data[0]);
+                    img = Mat(pCodecCtx->height, pCodecCtx->width, CV_8UC3, pFrameRGB->data[0]).clone();
                 }
             }
         }
@@ -193,7 +193,7 @@ void myCapture::read(QImage &img)
                 {
                     sws_scale(pSwsCtx, pFrame->data, pFrame->linesize, 0,
                               pCodecCtx->height, pFrameRGB->data, pFrameRGB->linesize);
-                    img = QImage((uchar *)pFrameRGB->data[0], pCodecCtx->width, pCodecCtx->height, QImage::Format_RGB888);
+                    img = QImage((uchar *)pFrameRGB->data[0], pCodecCtx->width, pCodecCtx->height, QImage::Format_RGB888).copy();
                 }
             }
         }
@@ -273,7 +273,7 @@ void myCapture::theardDecode()
                 // frameQueue.push(pFrame);
                 sws_scale(pSwsCtx, pFrame->data, pFrame->linesize, 0,
                           pCodecCtx->height, pFrameRGB->data, pFrameRGB->linesize);
-                QImage img = QImage((uchar *)pFrameRGB->data[0], pCodecCtx->width, pCodecCtx->height, QImage::Format_RGB888);
+                QImage img = QImage((uchar *)pFrameRGB->data[0], pCodecCtx->width, pCodecCtx->height, QImage::Format_RGB888).copy();
                 img_info info{.img = img, .pts = static_cast<uint64_t>(pts)};
                 imgQueue.push(info);
             }
