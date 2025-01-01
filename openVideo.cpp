@@ -101,7 +101,6 @@ bool myCapture::init()
     cout << "videoStreamIdx: " << videoStreamIdx << endl;
     cout << "视频流数量: " << av_q2d(pFormatCtx->streams[videoStreamIdx]->avg_frame_rate) << endl;
     Assert(videoStreamIdx == -1);
-
     /*解码文件*/
     // 获取视频流的解码器
     AVCodecParameters *pCodecParam = pFormatCtx->streams[videoStreamIdx]->codecpar;
@@ -326,21 +325,21 @@ void myCapture::theardDisplay()
             std::this_thread::sleep_for(std::chrono::microseconds(static_cast<int>(delay)));
         }
         lastFramePts = frame.value().pts;
-
-        emit sigFrame(frame.value().img);
+        frame.value().pts /= 1e6; // 转化为秒
+        emit sigFrame(frame.value());
     }
 
     cout << "显示线程结束" << endl;
 }
-void myCapture::start()
+double myCapture::start()
 {
     // 在创建线程前应该确保所有资源都已经正确初始化
     if (!inited || !opened || !pFormatCtx || !pCodecCtx)
     {
         qDebug() << "视频未正确初始化，无法开始播放";
-        return;
+        return 0;
     }
-
+    double duration = static_cast<double>(pFormatCtx->streams[videoStreamIdx]->duration * av_q2d(pFormatCtx->streams[videoStreamIdx]->time_base));
     // 重置所有状态
     isStop = false;
     isPause = false;
@@ -356,6 +355,7 @@ void myCapture::start()
     display.detach();
     decode.detach();
     packet.detach();
+    return duration;
 }
 
 double myCapture::synchronizePts(AVFrame *frame, double pts)

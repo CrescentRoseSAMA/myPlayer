@@ -22,6 +22,7 @@ struct img_info
 {
     QImage img;
     uint64_t pts;
+    uint64_t clock;
 };
 using ImgQueue = myThreadQueue<std::optional<img_info>>;
 class myCapture : public QObject
@@ -76,14 +77,12 @@ public:
     void theardPacket();
     void theardDecode();
     void theardDisplay();
-
-public Q_SLOTS:
     void pauseVideo();
     void resumeVideo();
-    void start();
+    double start();
     void stop();
     void setPlaySpeed(double speed);
 
 Q_SIGNALS:
-    void sigFrame(QImage img);
+    void sigFrame(img_info &img);
 };

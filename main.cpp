@@ -18,6 +18,8 @@ using namespace cv;
 
 int main(int argc, char *argv[])
 {
+    qRegisterMetaType<img_info>("img_info");
+    qRegisterMetaType<img_info>("img_info&");
     QApplication app(argc, argv);
     QFile file(":/ui/style/style.qss");
     if (file.open(QFile::ReadOnly))

@@ -2,34 +2,44 @@
 using namespace std;
 int mouseTime = 0;
 string path = "../mad.mp4";
+int hourPerSec = 60 * 60;
+int minutePerSec = 60;
 videoPlayer::videoPlayer(QWidget *parent) : QWidget(parent), minSize(450, 450), maxSize(1870, 1030), showAera(0, 0, 500, 500)
 {
     setMaximumSize(maxSize);
     setMinimumSize(minSize);
     // this->setStyleSheet("background-color:rgba(125, 125, 125, 100);");
     playButton = new QPushButton();
-    playButton->setFixedSize(80, 80);
+    playButton->setFixedSize(50, 50);
     playButton->setObjectName("play");
     pauseButton = new QPushButton();
-    pauseButton->setFixedSize(80, 80);
+    pauseButton->setFixedSize(50, 50);
     pauseButton->setObjectName("pause");
     stopButton = new QPushButton();
     stopButton->setObjectName("stop");
-    stopButton->setFixedSize(80, 80);
+    stopButton->setFixedSize(50, 50);
     selectButton = new QPushButton();
-    selectButton->setFixedSize(80, 80);
+    selectButton->setFixedSize(50, 50);
     selectButton->setObjectName("select");
 
-    QHBoxLayout *layout = new QHBoxLayout();
+    QHBoxLayout *bHlayout = new QHBoxLayout();
+    QVBoxLayout *bVlayout = new QVBoxLayout();
     QVBoxLayout *vlayout = new QVBoxLayout();
+    progressBar = new QProgressBar();
+    progressBar->setFixedHeight(20);
+    progressBar->setObjectName("progressBar");
     buttonBar = new QFrame();
     buttonBar->setObjectName("bottomBar");
-    buttonBar->setFixedHeight(80);
-    buttonBar->setLayout(layout);
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->addWidget(playButton, 0, Qt::AlignCenter);
-    layout->addWidget(pauseButton, 0, Qt::AlignCenter);
-    layout->addWidget(selectButton, 0, Qt::AlignCenter);
+    buttonBar->setFixedHeight(70);
+    bHlayout->setContentsMargins(0, 0, 0, 0);
+    bHlayout->addWidget(playButton, 0, Qt::AlignCenter);
+    bHlayout->addWidget(pauseButton, 0, Qt::AlignCenter);
+    bHlayout->addWidget(selectButton, 0, Qt::AlignCenter);
+    bVlayout->setContentsMargins(0, 0, 0, 0);
+    bVlayout->setSpacing(0);
+    bVlayout->addWidget(progressBar);
+    bVlayout->addLayout(bHlayout);
+    buttonBar->setLayout(bVlayout);
     vlayout->addWidget(buttonBar, 0, Qt::AlignBottom);
     this->setLayout(vlayout);
     menuBar = new QMenuBar(this);
@@ -43,11 +53,11 @@ videoPlayer::videoPlayer(QWidget *parent) : QWidget(parent), minSize(450, 450), 
     action2->setObjectName("s2");
     timer.setObjectName("timer");
     timer.start(100);
+
     connect(&cap, &myCapture::sigFrame, this, &videoPlayer::mshow);
     connect(pauseButton, &QPushButton::clicked, &cap, &myCapture::pauseVideo);
     connect(playButton, &QPushButton::clicked, &cap, &myCapture::resumeVideo);
     connect(&timer, &QTimer::timeout, this, &videoPlayer::on_timer_timeout);
-
     // this->setAttribute(Qt::WA_TranslucentBackground);
     // this->setWindowFlags(Qt::FramelessWindowHint);
     QMetaObject::connectSlotsByName(this);
@@ -62,7 +72,10 @@ void videoPlayer::setVideo(string path)
 
     if (cap.open(path))
     {
-        cap.start(); // 添加这行，确保视频开始播放
+        double videoDuration = cap.start(); // 添加这行，确保视频开始播放
+        progressBar->setMaximum(videoDuration);
+        qDebug() << "video duration:" << videoDuration;
+        progressBar->setValue(0);
     }
     else
     {
@@ -94,16 +107,18 @@ void videoPlayer::resizeEvent(QResizeEvent *event)
     update();
     QWidget::resizeEvent(event);
 }
-void videoPlayer::mshow(QImage img)
+void videoPlayer::mshow(img_info &value)
 {
-    if (showAera.size().isValid() && !img.isNull())
+    if (showAera.size().isValid() && !value.img.isNull())
     {
-        this->frame = img.scaled(showAera.size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        this->frame = value.img.scaled(showAera.size(), Qt::KeepAspectRatio, Qt::SmoothTransformation).copy();
     }
     else
     {
-        this->frame = img;
+        this->frame = value.img.copy();
     }
+
+    updateProgressBar(value.pts);
     update();
 }
 
@@ -145,4 +160,14 @@ void videoPlayer::mouseMoveEvent(QMouseEvent *event)
         buttonBarVisible = true;
     }
     QWidget::mouseMoveEvent(event);
+}
+
+void videoPlayer::updateProgressBar(int value)
+{
+    int second = value % minutePerSec;
+    int minute = (value - second) / 60.0f;
+    int hour = static_cast<int>(value / static_cast<double>(hourPerSec));
+    QString timeStr = QString("%1:%2:%3").arg(hour, 2).arg(minute, 2).arg(second, 2);
+    progressBar->setFormat(timeStr);
+    progressBar->setValue(value);
 }

@@ -14,6 +14,7 @@
 #include <QFileDialog>
 #include <QFile>
 #include <QMouseEvent>
+#include <QProgressBar>
 #include <QCloseEvent>
 #include <QSettings>
 #include <QFontDatabase>
@@ -39,6 +40,7 @@ private:
     TitleBar *titleBar;
     QFrame *buttonBar;
     QMenuBar *menuBar;
+    QProgressBar *progressBar;
     QRect showAera;
     QImage frame;
     myCapture cap;
@@ -49,6 +51,7 @@ public:
     videoPlayer(QWidget *parent = nullptr);
     ~videoPlayer();
     void setVideo(std::string path);
+    void updateProgressBar(int value);
     void paintEvent(QPaintEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
@@ -58,7 +61,7 @@ private Q_SLOTS:
     void on_s1_triggered();
     void on_s2_triggered();
     void on_timer_timeout();
-    void mshow(QImage img);
+    void mshow(img_info &value);
 };
 
 class mainWindow : public QWidget
